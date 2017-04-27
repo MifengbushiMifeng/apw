@@ -22,7 +22,7 @@ class _DbCtx(threading.local):
         self.transactions = 0
 
     def is_init(self):
-        return not self.connection is None
+        return self.connection is not None
 
     def init(self):
         self.connection = _LasyConnection()
@@ -59,3 +59,19 @@ class _ConncectionCtx(object):
 
 def connection():
     return _ConncectionCtx()
+
+
+class _transactionCtx(object):
+    def __enter__(self):
+        global _db_ctx
+        self.should_close_conn = False
+        if not _db_ctx.is_init:
+            _db_ctx.init()
+            self.should_close_conn = True
+        _db_ctx.transactions += 1
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        global _db_ctx
+        _db_ctx.transactions -= 1
+        pass  # TODO
