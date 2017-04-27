@@ -37,3 +37,25 @@ class _DbCtx(threading.local):
 
 
 _db_ctx = _DbCtx()
+
+
+# the context of the DB connection
+# Will get / release the DB connection auto
+class _ConncectionCtx(object):
+    def __enter__(self):
+        global _db_ctx
+        self.should_cleanup = False
+        if not _db_ctx.is_init():
+            _db_ctx.init()
+            self.should_cleanup = True
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+
+        global _db_ctx
+        if self.should_cleanup:
+            _db_ctx.cleanup()
+
+
+def connection():
+    return _ConncectionCtx()
