@@ -259,8 +259,39 @@ def transaction():
 def with_transaction(func):
     @functools.wraps(func)
     def _wrapper(*args, **kw):
+        _start = time.time()
         with _TransactionCtx:
             return func(*args, **kw)
         _profiling(_start)
 
     return _wrapper
+
+
+def _select(sql, first, *args):
+    """
+    Execute the input sql and then return the results
+    :param sql: the sql that want to be executed
+    :param first: True means get one record / False means get all records
+    :param args: the search result
+    :return: 
+    """
+    global _db_ctx
+    cursor = None
+    sql = sql.replace('?', '%s')
+
+    logging.info('SQL: %s, ARG %s' % (sql, args))
+
+    try:
+        cursor = _db_ctx.connection.cursor()
+        cursor.execute(sql, args)
+        if cursor.description:
+            names = [x[0] for x in cursor.description]
+        if first:
+            values = cursor.fetchone()
+            if not values:
+                return None
+            return Dict(names, values)
+        return [Dict(names, x) for x in cursor.fetchall()]
+    finally:
+        if cursor:
+            cursor.close()
