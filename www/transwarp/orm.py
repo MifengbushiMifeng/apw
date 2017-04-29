@@ -3,6 +3,34 @@
 import logging
 
 
+class Field(object):
+    _count = 0
+
+    def __init__(self, **kw):
+        self.name = kw.get('name', None)
+        self._default = kw.get('default', None)
+        self.primary_key = kw.get('primary_key', False)
+        self.nullable = kw.get('nullable', False)
+        self.updateable = kw.get('updateable', True)
+        self.insertable = kw.get('insertable', True)
+        self.ddl = kw.get('ddl', '')
+        self._order = Field._count
+        Field._count += 1
+
+    @property
+    def default(self):
+        d = self._default
+        return d() if callable(d) else d
+
+    def __str__(self):
+        s = ['<%s:%s,%s,default(%s),' % (self.__class__.__name__, self.name, self.ddl, self._default)]
+        self.nullable and s.append('N')
+        self.updateable and s.append('U')
+        self.insertable and s.append('I')
+        s.append('>')
+        return ''.join(s)
+
+
 class Model(dict):
     __metaclass__ = ModelMetaclass
 
