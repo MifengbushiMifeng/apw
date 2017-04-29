@@ -49,6 +49,42 @@ class IntegerField(Field):
         super(IntegerField, self).__init__(**kw)
 
 
+class FloatField(Field):
+    def __init__(self, **kw):
+        if 'default' not in kw:
+            kw['default'] = 0.0
+        if 'ddl' not in kw:
+            kw['ddl'] = 'real'
+        super(FloatField, self).__init__(**kw)
+
+
+class BooleanField(Field):
+    def __init__(self, **kw):
+        if 'default' not in kw:
+            kw['default'] = False
+        if 'ddl' not in kw:
+            kw['ddl'] = 'bool'
+        super(BooleanField, self).__init__(**kw)
+
+
+class TextField(Field):
+    def __init__(self, **kw):
+        if 'default' not in kw:
+            kw['default'] = ''
+        if 'ddl' not in kw:
+            kw['ddl'] = 'text'
+        super(TextField, self).__init__(**kw)
+
+
+class BlobField(Field):
+    def __init__(self, **kw):
+        if 'default' not in kw:
+            kw['default'] = ''
+        if 'ddl' not in kw:
+            kw['ddl'] = 'blob'
+        super(BlobField, self).__init__(**kw)
+
+
 class Model(dict):
     __metaclass__ = ModelMetaclass
 
