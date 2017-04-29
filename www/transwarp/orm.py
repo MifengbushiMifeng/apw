@@ -40,6 +40,15 @@ class StringField(Field):
         super(StringField, self).__init__()
 
 
+class IntegerField(Field):
+    def __init__(self, **kw):
+        if 'default' not in kw:
+            kw['default'] = 0
+        if 'ddl' not in kw:
+            kw['ddl'] = 'bigint'
+        super(IntegerField, self).__init__(**kw)
+
+
 class Model(dict):
     __metaclass__ = ModelMetaclass
 
