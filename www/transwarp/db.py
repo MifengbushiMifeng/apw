@@ -295,3 +295,71 @@ def _select(sql, first, *args):
     finally:
         if cursor:
             cursor.close()
+
+
+@with_connection
+def select_one(sql, *args):
+    """
+    Execute the sql and return the list or empty if no result.
+    """
+    return _select(sql, False, *args)
+
+
+@with_connection
+def select_init(sql, *args):
+    """
+    Execute the sql and expected that one int adn only one int result
+    :param sql: the sql that to be executed
+    :param args: the params
+    :return: the only int result
+    """
+    d = _select(sql, False, *args)
+    if len(d) != 1:
+        raise MultiColumnsError('Expect only one column.')
+    return d.values()[0]
+
+
+@with_connection
+def select(sql, *args):
+    """Execute the sql and return the result."""
+    return _select(sql, False, *args)
+
+
+@with_connection
+def _update(sql, *args):
+    global _db_ctx
+    cursor = None
+    sql = sql.replace('?', '%s')
+    logging.info('SQL: %s, ARGS: %s' % (sql, args))
+    try:
+        cursor = _db_ctx.connection.cursor()
+        cursor.execute(sql, args)
+        r = cursor.rowcount
+        if _db_ctx.transactions == 0:
+            logging.info('auto commit')
+            _db_ctx.connection.commit()
+        return r
+    finally:
+        if cursor:
+            cursor.close()
+
+
+def insert(table, **kw):
+    """
+    Execute the insert sql.
+    :param table: the table that will insert the new record
+    :param kw: the data of the new record
+    """
+    cols, args = zip(kw.iteritems())
+    sql = 'INSERT INTO `%s` (%s) VALUES (%s)' % (
+        table, ','.join(['`%s`' % col for col in cols]), ','.join(['?' for i in range(len(cols))]))
+    return _update(sql, *args)
+
+
+def update(sql, *args):
+    """
+    Execute the update sql.
+    :param sql: the update sql
+    :param args: the params of the sql
+    """
+    return _update(sql, *args)
