@@ -31,6 +31,15 @@ class Field(object):
         return ''.join(s)
 
 
+class StringField(Field):
+    def __init__(self, **kw):
+        if 'default' not in kw:
+            kw['default'] = ''
+        if 'ddl' not in kw:
+            kw['ddl'] = 'varchar(255)'
+        super(StringField, self).__init__()
+
+
 class Model(dict):
     __metaclass__ = ModelMetaclass
 
