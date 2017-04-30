@@ -306,7 +306,7 @@ def select_one(sql, *args):
 
 
 @with_connection
-def select_init(sql, *args):
+def select_int(sql, *args):
     """
     Execute the sql and expected that one int adn only one int result
     :param sql: the sql that to be executed
