@@ -1,6 +1,7 @@
 # !/usr/bin/env python
 # encoding=utf-8
 import logging
+import db
 
 
 class Field(object):
@@ -130,6 +131,18 @@ class Model(dict):
     def __setattr__(self, key, value):
         self[key] = value
 
+    @classmethod
+    def get(cls, pk):
+        """
+        Get by primary key
+        :param pk: primary key
+        """
+        d = db.select_one('select * from %s where %s=?' % (cls.__table__, cls.__primary_key__.name), pk)
+        return cls(**d) if d else None
+
+    @classmethod
+    def find_first(cls,where,*args):
+        pass
 
 class ModelMetaclass(type):
     """
