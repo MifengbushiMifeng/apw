@@ -85,6 +85,36 @@ class BlobField(Field):
         super(BlobField, self).__init__(**kw)
 
 
+class VersionField(Field):
+    def __init__(self, name=None):
+        super(VersionField, self).__init__(name=name, default=0, ddl='bigint')
+
+
+_tirggers = frozenset(['pre_insert', 'pre_update', 'pre_delete'])
+
+
+def gen_sql(table_name, mappings):
+    """
+    Generate sql by using the table_name and mappings
+    :param table_name: the DB table name
+    :param mappings: the params
+    :return: the generated sql
+    """
+    pk = None
+    sql = ['-- generating SQL for %s:' % table_name, 'create table `%s` (' % table_name]
+    for f in sorted(mappings.values(), lambda x, y: cmp(x._order, y._order)):
+        if not hasattr(f, 'ddl'):
+            raise StandardError('No ddl in field "%s".' % f)
+        ddl = f.ddl
+        nullable = f.nullable
+        if f.primary_key:
+            pk = f.name
+        sql.append(nullable and '  `%s` %s,' % (f.name, ddl) or '  `%s` %s not null,' % (f.name, ddl))
+    sql.append('  primary key(`%s`)' % pk)
+    sql.append(');')
+    return '\n'.join(sql)
+
+
 class Model(dict):
     __metaclass__ = ModelMetaclass
 
