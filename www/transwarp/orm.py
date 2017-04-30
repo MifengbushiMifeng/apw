@@ -186,6 +186,13 @@ class Model(dict):
         db.update('update `%s` set %s where %s = ?' % (self.__table__, ','.join(L), pk), *args)
         return self
 
+    def delete(self):
+        self.pre_delete and self.pre_delete()
+        pk = self.__primary_key__.name
+        args = (getattr(self, pk),)
+        db.update('delete from `%s` where `%s` = ?' % (self.__table__, pk), *args)
+        return self
+
 
 class ModelMetaclass(type):
     """
