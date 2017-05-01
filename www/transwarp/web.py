@@ -24,7 +24,7 @@ class Dict(dict):
 
     def __getattr__(self, key):
         try:
-            return self[k]
+            return self[key]
         except KeyError:
             raise AttributeError(r" 'Dict'object has no attribute '%s' " % key)
 
@@ -39,4 +39,30 @@ _RE_TZ = re.compile('^([\+\-])([0-9]{1,2})\:([0-9]{1,2})$')
 
 # timezone as UTC+8:00, UTC-10:00
 class UTC(datetime.tzinfo):
-    pass
+    def __init__(self, utc):
+        utc = str(utc.strip().upper())
+        mt = _RE_TZ.match(utc)
+        if mt:
+            minus = mt.group(1) == '-'
+            h = int(mt.group(2))
+            m = int(mt.group(3))
+            if minus:
+                h, m = (-h), (-m)
+            self._utcoffset = datetime.timedelta(hours=h, minutes=m)
+            self._tzname = 'UTC%s' % utc
+        else:
+            raise ValueError('bad utc time zone')
+
+    def utcoffset(self, date_time):
+        return self._utcoffset
+
+    def dst(self, date_time):
+        return _TIMEDELTA_ZERO
+
+    def tzname(self, date_time):
+        return self._tzname
+
+    def __str__(self):
+        return 'UTC tzinfo object (%s) ' % self._tzname
+
+    __repr__ = __str__()
