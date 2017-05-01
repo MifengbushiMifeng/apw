@@ -224,3 +224,62 @@ class RedirectError(HTTPError):
         return '%s, %s' % (self.status, self.location)
 
     __repr__ = __str__
+
+
+def badresuest():
+    """
+    Send a 'bad request' error in response
+    :return: the 'bad request' response
+    """
+    return HTTPError(400)
+
+
+def unauthorized():
+    """
+    Send a 'unauthorized' error in response
+    :return: the 'unauthorized' response
+    """
+    return HTTPError(401)
+
+
+def forbidden():
+    """
+    Send a 'forbidden' error in response
+    :return: the 'forbidden' response
+    """
+    return HTTPError(403)
+
+
+def notfount():
+    """
+    Send a 'not found' error in response
+    :return: the 'not found' response
+    """
+    return HTTPError(404)
+
+
+def conflict():
+    """
+    Send a 'conflict' error in response
+    :return: the 'conflict' response
+    """
+    return HTTPError(409)
+
+
+def internalerror():
+    """
+    Send an 'internal error' in response
+    :return: the 'internal error' response
+    """
+    return HTTPError(500)
+
+
+def redirect(location):
+    """
+    Do payment redirect
+    :param location: the location that will be redirect to
+    :return: the 'redirect' response
+    """
+    return RedirectError(301, location)
+
+
