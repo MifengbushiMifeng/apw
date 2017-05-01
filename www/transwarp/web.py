@@ -276,10 +276,26 @@ def internalerror():
 
 def redirect(location):
     """
-    Do payment redirect
+    Do permanent redirect
     :param location: the location that will be redirect to
     :return: the 'redirect' response
     """
     return RedirectError(301, location)
 
 
+def found(location):
+    """
+    Do temporary redirect
+    :param location: the location that will be redirect to
+    :return: the 'redirect' response
+    """
+    return RedirectError(302, location)
+
+
+def seeother(location):
+    """
+    Do temporary redirect
+    :param location: the location that will be redirect to
+    :return: the 'redirect' response
+    """
+    return RedirectError(303, location)
