@@ -299,3 +299,16 @@ def seeother(location):
     :return: the 'redirect' response
     """
     return RedirectError(303, location)
+
+
+def _to_str(s):
+    """
+    Convent to string
+    :param s: the object that want to convent to string
+    :return: the string type value of the input 's'
+    """
+    if isinstance(s, str):
+        return s
+    if isinstance(s, unicode):
+        return s.encode('utf-8')
+    return str(s)
