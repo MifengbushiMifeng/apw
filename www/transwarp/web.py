@@ -206,3 +206,21 @@ class HTTPError(Exception):
     __repr__ = __str__
 
 
+class RedirectError(HTTPError):
+    """
+    RedirectError defines the http redirect codes
+    """
+
+    def __init__(self, code, location):
+        """
+        Init an HtttpError with response code
+        :param code: the http error code
+        :param location: the redirect location
+        """
+        super(RedirectError, self).__init__(code)
+        self.location = location
+
+    def __str__(self):
+        return '%s, %s' % (self.status, self.location)
+
+    __repr__ = __str__
