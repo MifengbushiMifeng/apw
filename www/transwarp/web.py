@@ -461,9 +461,9 @@ class StaticFileRoute(object):
 
 
 def favicon_handler():
+    # return static_file_handler('/favicon.ico') TODO
+    pass
 
-
-# return static_file_handler('/favicon.ico') TODO
 
 class MultipartFile(object):
     def __init__(self, storage):
