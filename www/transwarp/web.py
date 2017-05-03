@@ -352,6 +352,7 @@ def get(path):
 def post(path):
     """
     A 'POST' decorator
+    :param path:
     """
 
     def _decorator(func):
@@ -499,4 +500,93 @@ class Request(object):
         return self._raw_input
 
     def __getitem__(self, key):
-        return self._get_raw_input()[key]
+        r = self._get_raw_input()[key]
+        if isinstance(r, list):
+            return r[0]
+        return r
+
+    def get(self, key, default=None):
+        r = self._get_raw_input().get(key, default)
+        if isinstance(r, list):
+            return r[0]
+        return r
+
+    def gets(self, key):
+        r = self._get_raw_input()[key]
+        if isinstance(r, list):
+            return r[:]
+        return [r]
+
+    def input(self, **kw):
+        copy = Dict(**kw)
+        raw = self._get_raw_input()
+        for k, v in raw.iteritems():
+            copy[k] = v[0] if isinstance(v, list) else v
+        return copy
+
+    def get_body(self):
+        fp = self._environ['wsgi.input']
+        return fp.read()
+
+    @property
+    def remote_addr(self):
+        """
+        Get the remote address.
+        Return 0.0.0.0 if cannot get remote address.
+        :return: the remote address
+        """
+        return self._environ.get('REMOTE_ADDR', '0.0.0.0')
+
+    @property
+    def document_root(self):
+        return self._environ.get('DOCUMENT_ROOT', '')
+
+    @property
+    def query_string(self):
+        return self._environ.get('QUERY_STRING', '')
+
+    @property
+    def environ(self):
+        return self.environ
+
+    @property
+    def request_method(self):
+        return self._environ['REQUEST_METHOD']
+
+    @property
+    def path_info(self):
+        return urllib.unquote(self._environ.get('PATH_INFO', ''))
+
+    @property
+    def host(self):
+        return self._environ.get('HTTP_HOST', '')
+
+    def _get_headers(self):
+        if not hasattr(self, '_headers'):
+            hdrs = {}
+            for k, v in self._environ.iteritems():
+                if k.startwith('HTTP_'):
+                    hdrs[k[5:].replace('_', '-').upper()] = v.decode('utf-8')
+            self._headers = hdrs
+            return self._headers
+
+    @property
+    def headers(self):
+        return dict(**self._get_headers())
+
+    def header(self, header, default=None):
+        return self._get_headers().get(header.upper(), default)
+
+    def _get_cookies(self):
+        if not hasattr(self, '_cookies'):
+            cookies = []
+            cookie_str = self._environ.get('HTTP_COOKIE')
+            if cookie_str:
+                for c in cookie_str.split(';'):
+                    pos = c.find('=')
+                    if pos > 0:
+                        cookies[c[:pos].strip()] = _unquote(c[pos + 1:])
+            self._cookies = cookies
+        return self._cookies
+
+    
