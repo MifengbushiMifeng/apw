@@ -3,11 +3,16 @@
 """
 A simple, lightweight and WSGI-compatible web framework
 """
+import os
 import threading
 import datetime
 import re
+import urllib
+import mimetypes
+import cgi
 
 # thread local object that for storing requests and responses
+
 ctx = threading.local()
 
 
@@ -312,3 +317,186 @@ def _to_str(s):
     if isinstance(s, unicode):
         return s.encode('utf-8')
     return str(s)
+
+
+def _to_unicode(s, encoding='utf-8'):
+    """
+    Convert to unicode 
+    """
+    return s.decode(encoding)
+
+
+def _quote(s, encoding='utf-8'):
+    if isinstance(s, unicode):
+        s = s.encode(encoding)
+    return urllib.quote(s)
+
+
+def _unquote(s, encoding='utf-8'):
+    return urllib.unquote(s).decode(encoding)
+
+
+def get(path):
+    """
+    A 'GET' decorator
+    """
+
+    def _decorator(func):
+        func.__web_route__ = path
+        func.__web_method__ = 'GET'
+        return func
+
+    return _decorator
+
+
+def post(path):
+    """
+    A 'POST' decorator
+    """
+
+    def _decorator(func):
+        func.__web_route__ = path
+        func.__web_method__ = 'POST'
+        return func
+
+    return _decorator
+
+
+_re_route = re.compile(r'(\:[a-zA-Z_]\w*)')
+
+
+def _build_regex(path):
+    r'''
+    Convert route path to regex.
+
+    >>> _build_regex('/path/to/:file')
+    '^\\/path\\/to\\/(?P<file>[^\\/]+)$'
+    >>> _build_regex('/:user/:comments/list')
+    '^\\/(?P<user>[^\\/]+)\\/(?P<comments>[^\\/]+)\\/list$'
+    >>> _build_regex(':id-:pid/:w')
+    '^(?P<id>[^\\/]+)\\-(?P<pid>[^\\/]+)\\/(?P<w>[^\\/]+)$'
+    '''
+    re_list = ['^']
+    var_list = []
+    is_var = False
+    for v in _re_route.split(path):
+        if is_var:
+            var_name = v[1:]
+            var_list.append(var_name)
+            re_list.append(r'(?P<%s>[^\/]+)' % var_name)
+        else:
+            s = ''
+            for ch in v:
+                if ch >= '0' and ch <= '9':
+                    s = s + ch
+                elif ch >= 'A' and ch <= 'Z':
+                    s = s + ch
+                elif ch >= 'a' and ch <= 'z':
+                    s = s + ch
+                else:
+                    s = s + '\\' + ch
+            re_list.append(s)
+        is_var = not is_var
+    re_list.append('$')
+    return ''.join(re_list)
+
+
+class Route(object):
+    """
+    A callable route object
+    """
+
+    def __init__(self, func):
+        self.path = func.__web_route__
+        self.method = func.__web_method__
+        self.is_static = _re_route.search(self.path) is None
+        if not self.is_static:
+            self.route = re.compile(_build_regex(self.path))
+        self.func = func
+
+    def match(self, url):
+        m = self.route.match(url)
+        if m:
+            return m.groups()
+        return None
+
+    def __call__(self, *args):
+        return self.func(*args)
+
+    def __str__(self):
+        if self.is_static:
+            return 'Route(static, %s, path=%s)' % (self.method, self.path)
+        return 'Route(dynamic, %s, path= %s) ' % (self.method, self.path)
+
+    __repr__ = __str__
+
+
+def _static_file_generator(fpath):
+    BLOCK_SIZE = 8192
+    with open(fpath, 'rb') as f:
+        block = f.read(BLOCK_SIZE)
+        while block:
+            yield block
+            block = f.read(BLOCK_SIZE)
+
+
+class StaticFileRoute(object):
+    def __init__(self):
+        self.method = 'GET'
+        self.is_static = False
+        self.route = re.compile('^/static/(.+)$')
+
+    def match(self, url):
+        if url.startwith('/static/'):
+            return (url[1:],)
+        return None
+
+    def __call__(self, *args):
+        fpath = os.path.join(ctx.application.document_root, args[0])
+        if not os.path.isfile(fpath):
+            raise notfount()
+        text = os.path.splitext(fpath)[1]
+        ctx.response.content_type = mimetypes.types_map.get(text.lower(), 'application/octet-stream')
+        return _static_file_generator(fpath)
+
+
+def favicon_handler():
+
+
+# return static_file_handler('/favicon.ico') TODO
+
+class MultipartFile(object):
+    def __init__(self, storage):
+        self.filename = _to_unicode(storage.filename)
+        self.file = storage.file
+
+
+class Request(object):
+    """
+    Request object for obtaining all http request information.
+    """
+
+    def __init__(self, environ):
+        self._environ = environ
+
+    def _parse_input(self):
+        def _convert(item):
+            if isinstance(item, list):
+                return [_to_unicode(i.value) for i in item]
+            if item.filename:
+                return MultipartFile(item)
+            return _to_unicode(item.value)
+
+        fs = cgi.FieldStorage(fp=self._environ['wsgi.input'], environ=self._environ, keep_blank_values=True)
+        inputs = dict()
+        for key in fs:
+            inputs[key] = _convert(fs[key])
+        return inputs
+
+    def _get_raw_input(self):
+        if not hasattr(self, '_raw_input'):
+            self._raw_input = self._parse_input()
+        return self._raw_input
+
+    def __getitem__(self, key):
+        return self._get_raw_input()[key]
