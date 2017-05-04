@@ -735,3 +735,12 @@ class Response(object):
                 raise ValueError('Bad response code: %s' % value)
         else:
             raise TypeError('Bad type of response code.')
+
+
+class TemplateEngine(object):
+    """
+    Base template engine.
+    """
+
+    def __call__(self, path, model):
+        return '<!-- override this method to render template -->'
