@@ -857,3 +857,8 @@ def _build_interceptor_chain(last_fn, *interceptors):
     for f in L:
         fn = _build_interceptor_fn(f, fn)
     return fn
+
+
+def _load_module(module_name):
+    last_dot = module_name.rfind('.')
+    pass  # TODO
