@@ -11,6 +11,7 @@ import urllib
 import mimetypes
 import cgi
 import logging
+import functools
 
 # thread local object that for storing requests and responses
 
@@ -738,6 +739,12 @@ class Response(object):
             raise TypeError('Bad type of response code.')
 
 
+class Template(object):
+    def __init__(self, template_name, **kw):
+        self.template_name = template_name
+        self.model = dict(**kw)
+
+
 class TemplateEngine(object):
     """
     Base template engine.
@@ -779,3 +786,74 @@ def _default_error_handler(e, start_response, is_debug):
     return ('<html><body><h1>500 Internal Server Error</h1><h3>%s</h3></body></html>' % str(e))
 
 
+def view(path):
+    """
+    A view decorator that render a view by dict
+    :param path:
+    :return:
+    """
+
+    def _decorator(func):
+        @functools.wraps(func)
+        def _wrapper(*args, **kw):
+            r = func(*args, **kw)
+            if isinstance(r, dict):
+                logging.info('return Template')
+                return Template(path, **r)
+
+        return _wrapper
+
+    return _decorator
+
+
+_RE_INTERCEPTROR_STARTS_WITH = re.compile(r'^([^\*\?]+)\*?$')
+_RE_INTERCEPTROR_ENDS_WITH = re.compile(r'^\*([^\*\?]+)$')
+
+
+def _build_pattern_fn(pattern):
+    m = _RE_INTERCEPTROR_STARTS_WITH.match(pattern)
+    if m:
+        return lambda p: p.startwith(m.group(1))
+    m = _RE_INTERCEPTROR_ENDS_WITH.match(pattern)
+    if m:
+        return lambda p: p.endwith(m.group(1))
+    raise ValueError('Invalid pattern definition in interceptor')
+
+
+def interceptor(pattern='/'):
+    """
+    An @interceptor decorator
+    :param pattern:
+    :return:
+    """
+
+    def _decorator(func):
+        func.__interceptor__ = _build_pattern_fn(pattern)
+        return func
+
+    return _decorator
+
+
+def _build_interceptor_fn(func, next):
+    def _warpper():
+        if func.__interceptor__(ctx.request.path_info):
+            return func(next)
+        else:
+            return next()
+
+    return _warpper
+
+
+def _build_interceptor_chain(last_fn, *interceptors):
+    """
+    Build interceptor chain
+    :param last_fn:
+    :param interceptors:
+    :return:
+    """
+    L = list(interceptors)
+    L.reverse()
+    fn = last_fn
+    for f in L:
+        fn = _build_interceptor_fn(f, fn)
+    return fn
