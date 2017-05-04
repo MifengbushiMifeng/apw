@@ -10,6 +10,7 @@ import re
 import urllib
 import mimetypes
 import cgi
+import logging
 
 # thread local object that for storing requests and responses
 
@@ -762,3 +763,19 @@ class Jinja2TemplateEngine(TemplateEngine):
 
     def __call__(self, path, model):
         return self._env.get_template(path).render(**model).encode('utf-8')
+
+
+def _default_error_handler(e, start_response, is_debug):
+    if isinstance(e, HTTPError):
+        logging.info('HttpError: %s' % e.status)
+        headers = e.headers[:]
+        headers.append(('Content-Type', 'text/html'))
+        start_response(e.status, headers)
+        return ('<html><body><h1>%s</h1></body></html>' % e.status)
+    logging.exception('Exception')
+    start_response('500 Internal Server Error', [('Content-Type', 'text/html'), _HEADER_X_POWERED_BY])
+    if is_debug:
+        pass
+    return ('<html><body><h1>500 Internal Server Error</h1><h3>%s</h3></body></html>' % str(e))
+
+
