@@ -744,3 +744,21 @@ class TemplateEngine(object):
 
     def __call__(self, path, model):
         return '<!-- override this method to render template -->'
+
+
+class Jinja2TemplateEngine(TemplateEngine):
+    """
+    Render using jinja2 template engine.
+    """
+
+    def __init__(self, temp_dir, **kw):
+        from jinja2 import Environment, FileSystemLoader
+        if 'autoescape' not in kw:
+            kw['autoescape'] = True
+        self._env = Environment(loader=FileSystemLoader(temp_dir), **kw)
+
+    def add_filter(self, name, fn_filter):
+        self._env.filters[name] = fn_filter
+
+    def __call__(self, path, model):
+        return self._env.get_template(path).render(**model).encode('utf-8')
