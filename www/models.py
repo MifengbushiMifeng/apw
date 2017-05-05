@@ -39,7 +39,7 @@ class Blog(Model):
     created_at = FloatField(updateable=False, default=time.time)
 
 
-class Content(Model):
+class Comment(Model):
     __table__ = 'comment'
 
     id = StringField(primary_key=True, default=next_id, ddl='varchar(50)')
