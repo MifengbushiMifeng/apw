@@ -861,4 +861,10 @@ def _build_interceptor_chain(last_fn, *interceptors):
 
 def _load_module(module_name):
     last_dot = module_name.rfind('.')
-    pass  # TODO
+    if last_dot == (-1):
+        return __import__(module_name, globals(), locals())
+    from_module = module_name[:last_dot]
+    import_module = module_name[last_dot + 1:]
+    m = __import__(from_module, globals(), locals(), [import_module])
+    return getattr(m, import_module)
+
