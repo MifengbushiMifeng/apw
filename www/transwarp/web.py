@@ -977,9 +977,9 @@ class WSGIApplication(object):
 
         fn_exec = _build_interceptor_chain(fn_route, *self._interceptors)
 
-        def wsgi(enc, start_response):
+        def wsgi(env, start_response):
             ctx.application = _application
-            ctx.request = Request(enc)
+            ctx.request = Request(env)
             response = ctx.response = Response
             try:
                 r = fn_exec()
@@ -1006,4 +1006,16 @@ class WSGIApplication(object):
                 exc_type, exc_value, exc_traceback = sys.exc_info()
                 fp = StringIO()
                 traceback.print_exception(exc_type, exc_value, exc_traceback, file=fp)
+                stacks = fp.getvalue()
+                fp.close()
+                start_response('500 Internal Server Error', [])
+                return [
+                    r'''<html><body><h1>500 Internal Server Error</h1><div style="font-family:Monaco, Menlo, Consolas, 'Courier New', monospace;"><pre>''',
+                    stacks.replace('<', '&lt;').replace('>', '&gt;'),
+                    '</pre></div></body></html>']
+            finally:
+                del ctx.application
+                del ctx.request
+                del ctx.response
 
+        return wsgi
