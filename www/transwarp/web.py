@@ -18,7 +18,6 @@ except ImportError:
 
 ctx = threading.local()
 
-
 # Dict object:
 
 class Dict(dict):
@@ -51,7 +50,6 @@ class Dict(dict):
     >>> d3.c
     3
     '''
-
     def __init__(self, names=(), values=(), **kw):
         super(Dict, self).__init__(**kw)
         for k, v in zip(names, values):
@@ -66,13 +64,11 @@ class Dict(dict):
     def __setattr__(self, key, value):
         self[key] = value
 
-
 _TIMEDELTA_ZERO = datetime.timedelta(0)
 
 # timezone as UTC+8:00, UTC-10:00
 
 _RE_TZ = re.compile('^([\+\-])([0-9]{1,2})\:([0-9]{1,2})$')
-
 
 class UTC(datetime.tzinfo):
     '''
@@ -106,7 +102,7 @@ class UTC(datetime.tzinfo):
         utc = str(utc.strip().upper())
         mt = _RE_TZ.match(utc)
         if mt:
-            minus = mt.group(1) == '-'
+            minus = mt.group(1)=='-'
             h = int(mt.group(2))
             m = int(mt.group(3))
             if minus:
@@ -129,7 +125,6 @@ class UTC(datetime.tzinfo):
         return 'UTC tzinfo object (%s)' % self._tzname
 
     __repr__ = __str__
-
 
 # all known response statues:
 
@@ -243,7 +238,6 @@ _RESPONSE_HEADER_DICT = dict(zip(map(lambda x: x.upper(), _RESPONSE_HEADERS), _R
 
 _HEADER_X_POWERED_BY = ('X-Powered-By', 'transwarp/1.0')
 
-
 class HttpError(Exception):
     '''
     HttpError that defines http error code.
@@ -252,7 +246,6 @@ class HttpError(Exception):
     >>> e.status
     '404 Not Found'
     '''
-
     def __init__(self, code):
         '''
         Init an HttpError with response code.
@@ -276,7 +269,6 @@ class HttpError(Exception):
 
     __repr__ = __str__
 
-
 class RedirectError(HttpError):
     '''
     RedirectError that defines http redirect code.
@@ -287,7 +279,6 @@ class RedirectError(HttpError):
     >>> e.location
     'http://www.apple.com/'
     '''
-
     def __init__(self, code, location):
         '''
         Init an HttpError with response code.
@@ -300,7 +291,6 @@ class RedirectError(HttpError):
 
     __repr__ = __str__
 
-
 def badrequest():
     '''
     Send a bad request response.
@@ -311,7 +301,6 @@ def badrequest():
     HttpError: 400 Bad Request
     '''
     return HttpError(400)
-
 
 def unauthorized():
     '''
@@ -324,7 +313,6 @@ def unauthorized():
     '''
     return HttpError(401)
 
-
 def forbidden():
     '''
     Send a forbidden response.
@@ -335,7 +323,6 @@ def forbidden():
     HttpError: 403 Forbidden
     '''
     return HttpError(403)
-
 
 def notfound():
     '''
@@ -348,7 +335,6 @@ def notfound():
     '''
     return HttpError(404)
 
-
 def conflict():
     '''
     Send a conflict response.
@@ -359,7 +345,6 @@ def conflict():
     HttpError: 409 Conflict
     '''
     return HttpError(409)
-
 
 def internalerror():
     '''
@@ -372,7 +357,6 @@ def internalerror():
     '''
     return HttpError(500)
 
-
 def redirect(location):
     '''
     Do permanent redirect.
@@ -384,7 +368,6 @@ def redirect(location):
     '''
     return RedirectError(301, location)
 
-
 def found(location):
     '''
     Do temporary redirect.
@@ -395,7 +378,6 @@ def found(location):
     RedirectError: 302 Found, http://www.itranswarp.com/
     '''
     return RedirectError(302, location)
-
 
 def seeother(location):
     '''
@@ -410,7 +392,6 @@ def seeother(location):
     'http://www.itranswarp.com/seeother?r=123'
     '''
     return RedirectError(303, location)
-
 
 def _to_str(s):
     '''
@@ -429,7 +410,6 @@ def _to_str(s):
         return s.encode('utf-8')
     return str(s)
 
-
 def _to_unicode(s, encoding='utf-8'):
     '''
     Convert to unicode.
@@ -438,7 +418,6 @@ def _to_unicode(s, encoding='utf-8'):
     True
     '''
     return s.decode('utf-8')
-
 
 def _quote(s, encoding='utf-8'):
     '''
@@ -453,7 +432,6 @@ def _quote(s, encoding='utf-8'):
         s = s.encode(encoding)
     return urllib.quote(s)
 
-
 def _unquote(s, encoding='utf-8'):
     '''
     Url unquote as unicode.
@@ -462,7 +440,6 @@ def _unquote(s, encoding='utf-8'):
     u'http://example/test?a=1+'
     '''
     return urllib.unquote(s).decode(encoding)
-
 
 def get(path):
     '''
@@ -483,14 +460,11 @@ def get(path):
     >>> test()
     'ok'
     '''
-
     def _decorator(func):
         func.__web_route__ = path
         func.__web_method__ = 'GET'
         return func
-
     return _decorator
-
 
 def post(path):
     '''
@@ -507,17 +481,13 @@ def post(path):
     >>> testpost()
     '200'
     '''
-
     def _decorator(func):
         func.__web_route__ = path
         func.__web_method__ = 'POST'
         return func
-
     return _decorator
 
-
 _re_route = re.compile(r'(\:[a-zA-Z_]\w*)')
-
 
 def _build_regex(path):
     r'''
@@ -541,11 +511,11 @@ def _build_regex(path):
         else:
             s = ''
             for ch in v:
-                if ch >= '0' and ch <= '9':
+                if ch>='0' and ch<='9':
                     s = s + ch
-                elif ch >= 'A' and ch <= 'Z':
+                elif ch>='A' and ch<='Z':
                     s = s + ch
-                elif ch >= 'a' and ch <= 'z':
+                elif ch>='a' and ch<='z':
                     s = s + ch
                 else:
                     s = s + '\\' + ch
@@ -553,7 +523,6 @@ def _build_regex(path):
         is_var = not is_var
     re_list.append('$')
     return ''.join(re_list)
-
 
 class Route(object):
     '''
@@ -584,7 +553,6 @@ class Route(object):
 
     __repr__ = __str__
 
-
 def _static_file_generator(fpath):
     BLOCK_SIZE = 8192
     with open(fpath, 'rb') as f:
@@ -593,8 +561,8 @@ def _static_file_generator(fpath):
             yield block
             block = f.read(BLOCK_SIZE)
 
-
 class StaticFileRoute(object):
+
     def __init__(self):
         self.method = 'GET'
         self.is_static = False
@@ -602,7 +570,7 @@ class StaticFileRoute(object):
 
     def match(self, url):
         if url.startswith('/static/'):
-            return (url[1:],)
+            return (url[1:], )
         return None
 
     def __call__(self, *args):
@@ -613,10 +581,8 @@ class StaticFileRoute(object):
         ctx.response.content_type = mimetypes.types_map.get(fext.lower(), 'application/octet-stream')
         return _static_file_generator(fpath)
 
-
 def favicon_handler():
     return static_file_handler('/favicon.ico')
-
 
 class MultipartFile(object):
     '''
@@ -626,11 +592,9 @@ class MultipartFile(object):
     f.filename # 'test.png'
     f.file # file-like object
     '''
-
     def __init__(self, storage):
         self.filename = _to_unicode(storage.filename)
         self.file = storage.file
-
 
 class Request(object):
     '''
@@ -647,7 +611,6 @@ class Request(object):
             if item.filename:
                 return MultipartFile(item)
             return _to_unicode(item.value)
-
         fs = cgi.FieldStorage(fp=self._environ['wsgi.input'], environ=self._environ, keep_blank_values=True)
         inputs = dict()
         for key in fs:
@@ -915,8 +878,8 @@ class Request(object):
             if cookie_str:
                 for c in cookie_str.split(';'):
                     pos = c.find('=')
-                    if pos > 0:
-                        cookies[c[:pos].strip()] = _unquote(c[pos + 1:])
+                    if pos>0:
+                        cookies[c[:pos].strip()] = _unquote(c[pos+1:])
             self._cookies = cookies
         return self._cookies
 
@@ -948,11 +911,10 @@ class Request(object):
         '''
         return self._get_cookies().get(name, default)
 
-
 UTC_0 = UTC('+00:00')
 
-
 class Response(object):
+
     def __init__(self):
         self._status = '200 OK'
         self._headers = {'CONTENT-TYPE': 'text/html; charset=utf-8'}
@@ -1118,8 +1080,7 @@ class Response(object):
         L = ['%s=%s' % (_quote(name), _quote(value))]
         if expires is not None:
             if isinstance(expires, (float, int, long)):
-                L.append('Expires=%s' % datetime.datetime.fromtimestamp(expires, UTC_0).strftime(
-                    '%a, %d-%b-%Y %H:%M:%S GMT'))
+                L.append('Expires=%s' % datetime.datetime.fromtimestamp(expires, UTC_0).strftime('%a, %d-%b-%Y %H:%M:%S GMT'))
             if isinstance(expires, (datetime.date, datetime.datetime)):
                 L.append('Expires=%s' % expires.astimezone(UTC_0).strftime('%a, %d-%b-%Y %H:%M:%S GMT'))
         elif isinstance(max_age, (int, long)):
@@ -1212,7 +1173,7 @@ class Response(object):
         TypeError: Bad type of response code.
         '''
         if isinstance(value, (int, long)):
-            if value >= 100 and value <= 999:
+            if value>=100 and value<=999:
                 st = _RESPONSE_STATUSES.get(value, '')
                 if st:
                     self._status = '%d %s' % (value, st)
@@ -1230,8 +1191,8 @@ class Response(object):
         else:
             raise TypeError('Bad type of response code.')
 
-
 class Template(object):
+
     def __init__(self, template_name, **kw):
         '''
         Init a template object with template name, model as dict, and additional kw that will append to model.
@@ -1248,17 +1209,15 @@ class Template(object):
         self.template_name = template_name
         self.model = dict(**kw)
 
-
 class TemplateEngine(object):
     '''
     Base template engine.
     '''
-
     def __call__(self, path, model):
         return '<!-- override this method to render template -->'
 
-
 class Jinja2TemplateEngine(TemplateEngine):
+
     '''
     Render using jinja2 template engine.
 
@@ -1281,7 +1240,6 @@ class Jinja2TemplateEngine(TemplateEngine):
     def __call__(self, path, model):
         return self._env.get_template(path).render(**model).encode('utf-8')
 
-
 def _default_error_handler(e, start_response, is_debug):
     if isinstance(e, HttpError):
         logging.info('HttpError: %s' % e.status)
@@ -1292,10 +1250,8 @@ def _default_error_handler(e, start_response, is_debug):
     logging.exception('Exception:')
     start_response('500 Internal Server Error', [('Content-Type', 'text/html'), _HEADER_X_POWERED_BY])
     if is_debug:
-        # return _debug()
-        pass
+        return _debug()
     return ('<html><body><h1>500 Internal Server Error</h1><h3>%s</h3></body></html>' % str(e))
-
 
 def view(path):
     '''
@@ -1317,7 +1273,6 @@ def view(path):
       ...
     ValueError: Expect return a dict when using @view() decorator.
     '''
-
     def _decorator(func):
         @functools.wraps(func)
         def _wrapper(*args, **kw):
@@ -1326,15 +1281,11 @@ def view(path):
                 logging.info('return Template')
                 return Template(path, **r)
             raise ValueError('Expect return a dict when using @view() decorator.')
-
         return _wrapper
-
     return _decorator
-
 
 _RE_INTERCEPTROR_STARTS_WITH = re.compile(r'^([^\*\?]+)\*?$')
 _RE_INTERCEPTROR_ENDS_WITH = re.compile(r'^\*([^\*\?]+)$')
-
 
 def _build_pattern_fn(pattern):
     m = _RE_INTERCEPTROR_STARTS_WITH.match(pattern)
@@ -1345,7 +1296,6 @@ def _build_pattern_fn(pattern):
         return lambda p: p.endswith(m.group(1))
     raise ValueError('Invalid pattern definition in interceptor.')
 
-
 def interceptor(pattern='/'):
     '''
     An @interceptor decorator.
@@ -1354,13 +1304,10 @@ def interceptor(pattern='/'):
     def check_admin(req, resp):
         pass
     '''
-
     def _decorator(func):
         func.__interceptor__ = _build_pattern_fn(pattern)
         return func
-
     return _decorator
-
 
 def _build_interceptor_fn(func, next):
     def _wrapper():
@@ -1368,9 +1315,7 @@ def _build_interceptor_fn(func, next):
             return func(next)
         else:
             return next()
-
     return _wrapper
-
 
 def _build_interceptor_chain(last_fn, *interceptors):
     '''
@@ -1422,7 +1367,6 @@ def _build_interceptor_chain(last_fn, *interceptors):
         fn = _build_interceptor_fn(f, fn)
     return fn
 
-
 def _load_module(module_name):
     '''
     Load module from name as str.
@@ -1438,15 +1382,15 @@ def _load_module(module_name):
     'xml.sax.handler'
     '''
     last_dot = module_name.rfind('.')
-    if last_dot == (-1):
+    if last_dot==(-1):
         return __import__(module_name, globals(), locals())
     from_module = module_name[:last_dot]
-    import_module = module_name[last_dot + 1:]
+    import_module = module_name[last_dot+1:]
     m = __import__(from_module, globals(), locals(), [import_module])
     return getattr(m, import_module)
 
-
 class WSGIApplication(object):
+
     def __init__(self, document_root=None, **kw):
         '''
         Init a WSGIApplication.
@@ -1481,7 +1425,7 @@ class WSGIApplication(object):
 
     def add_module(self, mod):
         self._check_not_running()
-        m = mod if type(mod) == types.ModuleType else _load_module(mod)
+        m = mod if type(mod)==types.ModuleType else _load_module(mod)
         logging.info('Add module: %s' % m.__name__)
         for name in dir(m):
             fn = getattr(m, name)
@@ -1492,14 +1436,14 @@ class WSGIApplication(object):
         self._check_not_running()
         route = Route(func)
         if route.is_static:
-            if route.method == 'GET':
+            if route.method=='GET':
                 self._get_static[route.path] = route
-            if route.method == 'POST':
+            if route.method=='POST':
                 self._post_static[route.path] = route
         else:
-            if route.method == 'GET':
+            if route.method=='GET':
                 self._get_dynamic.append(route)
-            if route.method == 'POST':
+            if route.method=='POST':
                 self._post_dynamic.append(route)
         logging.info('Add route: %s' % str(route))
 
@@ -1525,7 +1469,7 @@ class WSGIApplication(object):
         def fn_route():
             request_method = ctx.request.request_method
             path_info = ctx.request.path_info
-            if request_method == 'GET':
+            if request_method=='GET':
                 fn = self._get_static.get(path_info, None)
                 if fn:
                     return fn()
@@ -1534,7 +1478,7 @@ class WSGIApplication(object):
                     if args:
                         return fn(*args)
                 raise notfound()
-            if request_method == 'POST':
+            if request_method=='POST':
                 fn = self._post_static.get(path_info, None)
                 if fn:
                     return fn()
@@ -1590,9 +1534,7 @@ class WSGIApplication(object):
 
         return wsgi
 
-
-if __name__ == '__main__':
+if __name__=='__main__':
     sys.path.append('.')
     import doctest
-
     doctest.testmod()

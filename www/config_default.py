@@ -1,17 +1,19 @@
-# !/usr/bin/env python
-# encoding=utf-8
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+__author__ = 'Jonathan Zhou'
 
 """
 Default configurations.
 """
-__author__ = 'Jonathan Zhou'
 
 configs = {
     'db': {
-        'host': '127.0.0.1',
+        # 'host': '127.0.0.1',
+        'host': '192.168.1.105',
         'port': 3306,
-        'user': 'www-data',
-        'password': 'www-data',
+        'user': 'root',
+        'password': 'password',
         'database': 'awesome'
     },
     'session': {
