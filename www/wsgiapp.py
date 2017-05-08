@@ -7,13 +7,15 @@ __author__ = 'Michael Liao'
 A WSGI application entry.
 '''
 
-import logging; logging.basicConfig(level=logging.INFO)
+import logging;
+
+logging.basicConfig(level=logging.INFO)
 
 import os
 
 from transwarp import db
 from transwarp.web import WSGIApplication, Jinja2TemplateEngine
-
+import urls
 from config import configs
 
 # init db:
@@ -25,8 +27,6 @@ wsgi = WSGIApplication(os.path.dirname(os.path.abspath(__file__)))
 template_engine = Jinja2TemplateEngine(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates'))
 
 wsgi.template_engine = template_engine
-
-import urls
 
 wsgi.add_module(urls)
 

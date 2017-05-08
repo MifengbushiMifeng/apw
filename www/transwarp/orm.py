@@ -1,18 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+
+"""
+Database operation module. 
+This module is independent with web module.
+"""
+
 __author__ = 'Michael Liao'
-
-'''
-Database operation module. This module is independent with web module.
-'''
-
 import time, logging
 
 import db
 
-class Field(object):
 
+class Field(object):
     _count = 0
 
     def __init__(self, **kw):
@@ -39,8 +40,8 @@ class Field(object):
         s.append('>')
         return ''.join(s)
 
-class StringField(Field):
 
+class StringField(Field):
     def __init__(self, **kw):
         if not 'default' in kw:
             kw['default'] = ''
@@ -48,8 +49,8 @@ class StringField(Field):
             kw['ddl'] = 'varchar(255)'
         super(StringField, self).__init__(**kw)
 
-class IntegerField(Field):
 
+class IntegerField(Field):
     def __init__(self, **kw):
         if not 'default' in kw:
             kw['default'] = 0
@@ -57,8 +58,8 @@ class IntegerField(Field):
             kw['ddl'] = 'bigint'
         super(IntegerField, self).__init__(**kw)
 
-class FloatField(Field):
 
+class FloatField(Field):
     def __init__(self, **kw):
         if not 'default' in kw:
             kw['default'] = 0.0
@@ -66,8 +67,8 @@ class FloatField(Field):
             kw['ddl'] = 'real'
         super(FloatField, self).__init__(**kw)
 
-class BooleanField(Field):
 
+class BooleanField(Field):
     def __init__(self, **kw):
         if not 'default' in kw:
             kw['default'] = False
@@ -75,8 +76,8 @@ class BooleanField(Field):
             kw['ddl'] = 'bool'
         super(BooleanField, self).__init__(**kw)
 
-class TextField(Field):
 
+class TextField(Field):
     def __init__(self, **kw):
         if not 'default' in kw:
             kw['default'] = ''
@@ -84,8 +85,8 @@ class TextField(Field):
             kw['ddl'] = 'text'
         super(TextField, self).__init__(**kw)
 
-class BlobField(Field):
 
+class BlobField(Field):
     def __init__(self, **kw):
         if not 'default' in kw:
             kw['default'] = ''
@@ -93,12 +94,14 @@ class BlobField(Field):
             kw['ddl'] = 'blob'
         super(BlobField, self).__init__(**kw)
 
-class VersionField(Field):
 
+class VersionField(Field):
     def __init__(self, name=None):
         super(VersionField, self).__init__(name=name, default=0, ddl='bigint')
 
+
 _triggers = frozenset(['pre_insert', 'pre_update', 'pre_delete'])
+
 
 def _gen_sql(table_name, mappings):
     pk = None
@@ -115,13 +118,15 @@ def _gen_sql(table_name, mappings):
     sql.append(');')
     return '\n'.join(sql)
 
+
 class ModelMetaclass(type):
     '''
     Metaclass for model objects.
     '''
+
     def __new__(cls, name, bases, attrs):
         # skip base Model class:
-        if name=='Model':
+        if name == 'Model':
             return type.__new__(cls, name, bases, attrs)
 
         # store all subclasses info:
@@ -166,6 +171,7 @@ class ModelMetaclass(type):
             if not trigger in attrs:
                 attrs[trigger] = None
         return type.__new__(cls, name, bases, attrs)
+
 
 class Model(dict):
     '''
@@ -273,7 +279,8 @@ class Model(dict):
         '''
         Find by 'select count(pk) from table where ... ' and return int.
         '''
-        return db.select_int('select count(`%s`) from `%s` %s' % (cls.__primary_key__.name, cls.__table__, where), *args)
+        return db.select_int('select count(`%s`) from `%s` %s' % (cls.__primary_key__.name, cls.__table__, where),
+                             *args)
 
     def update(self):
         self.pre_update and self.pre_update()
@@ -296,7 +303,7 @@ class Model(dict):
     def delete(self):
         self.pre_delete and self.pre_delete()
         pk = self.__primary_key__.name
-        args = (getattr(self, pk), )
+        args = (getattr(self, pk),)
         db.update('delete from `%s` where `%s`=?' % (self.__table__, pk), *args)
         return self
 
@@ -311,10 +318,12 @@ class Model(dict):
         db.insert('%s' % self.__table__, **params)
         return self
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     db.create_engine('www-data', 'www-data', 'test')
     db.update('drop table if exists user')
     db.update('create table user (id int primary key, name text, email text, passwd text, last_modified real)')
     import doctest
+
     doctest.testmod()
