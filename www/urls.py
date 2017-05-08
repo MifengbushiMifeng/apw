@@ -13,7 +13,7 @@ def test_user():
 
 
 @view('blogs.html')
-@get('/')  # TODO
+@get('/test')  # TODO
 def index():
     blogs = Blog.find_all()
     # get login user

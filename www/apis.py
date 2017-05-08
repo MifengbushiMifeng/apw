@@ -1,15 +1,34 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import functools
-import json
-import logging
-from transwarp.web import ctx
 
 """
 JSON API definition
 """
 
+import functools
+import json
+import logging
+from transwarp.web import ctx
+
 __author__ = 'Jonathan Zhou'
+
+
+class Page(object):
+    """
+    Page object for display web pages.
+    """
+
+    def __init__(self, item_count, page_index=1, page_size=15):
+        self.item_count = item_count
+        self.page_count = item_count // page_size + (1 if item_count % page_size > 0 else 0)
+
+
+def _dump(obj, Page):
+    pass
+
+
+def dumps(obj):
+    return json.dumps(obj, default=_dump)
 
 
 class APIError(StandardError):
@@ -35,21 +54,32 @@ class APIValueError(APIError):
         super(APIValueError, self).__init__('value:invalid', field, message)
 
 
+class APIResourceNotFoundError(APIError):
+    """
+    Indicate the resource was not found. The data specifies the resource name.
+    """
 
-class APIPermissionError():
-    pass
+    def __init__(self, field, message=''):
+        super(APIResourceNotFoundError, self).__init__('value:not found', field, message)
+
+
+class APIPermissionError(APIError):
+    """
+    Indicate the api has no permission.
+    """
+
+    def __init__(self, message=''):
+        super(APIPermissionError, self).__init__('permission:forbidden', 'permission', message)
 
 
 def api(func):
+    """
+    A decorator that makes a function to json api, makes the return value as json.
+    """
+
     @functools.wraps(func)
     def _wrapper(*args, **kw):
         try:
-            r = json.dumps(func(*args, **kw))
-        except APIError, e:
             pass
-        except Exception, e:
+        except:
             pass
-        ctx.response.coontent_type = 'application/json'
-        return r
-
-    return _wrapper
