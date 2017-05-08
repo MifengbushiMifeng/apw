@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8"/>
     {% block meta %}<!-- block meta -->{% endblock %}
+    <title>{% block title %} ? {% endblock %} - Awesome Python Webapp</title>
     <!--[if lt IE 9]>
     <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
     <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
@@ -19,6 +20,9 @@
     {% block beforehead %}<!-- before head _-->{% endblock %}
 </head>
 <body>
-
+<nav class="uk-navbar uk-navbar-attached uk-margin-bottom">
+    <div class="uk-container uk-container-center">
+    </div>
+</nav>
 </body>
 </html>
