@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-__author__ = 'Michael Liao'
 
-'''
+"""
 A WSGI application entry.
-'''
+"""
+import time
+
+__author__ = 'Jonathan Zhou'
 
 import logging;
 
@@ -17,6 +19,22 @@ from transwarp import db
 from transwarp.web import WSGIApplication, Jinja2TemplateEngine
 import urls
 from config import configs
+from datetime import datetime
+
+
+def datatime_filter(t):
+    delta = int(time.time() - t)
+    if delta < 60:
+        return u'1 minute ago.'
+    if delta < 3600:
+        return u'%s minutes ago.' % (delta // 60)
+    if delta < 86400:
+        return u'%s hours ago.' % (delta // 3600)
+    if delta < 604800:
+        return u'%s days ago.' % (delta // 86400)
+    dt = datetime.fromtimestamp(t)
+    return u'%s year %s month %s day' % (dt.year, dt.month, dt.day)
+
 
 # init db:
 db.create_engine(**configs.db)
