@@ -12,3 +12,10 @@ def test_user():
     return dict(users=users)
 
 
+@view('blogs.html')
+@get('/')  # TODO
+def index():
+    blogs = Blog.find_all()
+    # get login user
+    user = User.find_first('where email=?', 'admin@example.com')
+    return dict(blogs=blogs, user=user)

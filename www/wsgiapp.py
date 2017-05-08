@@ -43,9 +43,12 @@ db.create_engine(**configs.db)
 wsgi = WSGIApplication(os.path.dirname(os.path.abspath(__file__)))
 
 template_engine = Jinja2TemplateEngine(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates'))
+template_engine.add_filter('datetime', datatime_filter)
 
 wsgi.template_engine = template_engine
 
+# wsgi.add_interceptor(urls.user_interceptor)
+# wsgi.add_interceptor(urls.manage_interceptor)
 wsgi.add_module(urls)
 
 if __name__ == '__main__':
