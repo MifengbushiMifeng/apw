@@ -38,6 +38,13 @@ def parse_signed_cookie(cookie_str):
         return None
 
 
+def check_admin():
+    user = ctx.request.user
+    if user and user.admin:
+        return
+    raise APIPermissionError('No permission')
+
+
 @view('signin.html')
 @get('/signin')
 def signin():
@@ -109,8 +116,51 @@ def index():
 
 _RE_EMAIL = re.compile(r'^[a-z0-9\.\-\_]+\@[a-z0-9\-\_]+(\.[a-z0-9\-\_]+){1,4}$')
 
-
 _RE_MD5 = re.compile(r'^[0-9a-f]{32}$')
+
+
+@api
+@post('/api/blogs')
+def _api_create_blog():
+    check_admin()
+    i = ctx.request.input(name='', summary='', content='')
+    name = i.name.strip()
+    summary = i.summary.strip()
+    content = i.content.strip()
+    if not name:
+        raise APIValueError('name', 'name cannot be empty.')
+    if not summary:
+        raise APIValueError('summary', 'summary cannot be empty')
+    if not content:
+        raise APIValueError('content', 'content cannot be empty')
+    user = ctx.request.user
+    blog = Blog(user_id=user.id, user_name=user.name, name=name, summary=summary, content=content)
+    blog.insert()
+    return blog
+
+
+@api
+@post('/api/blogs/:blog_id')
+def api_update_blog(blog_id):
+    check_admin()
+    i = ctx.request.input(name='', summary='', content='')
+    name = i.name.strip()
+    summary = i.summary.strip()
+    content = i.content.strip()
+    if not name:
+        raise APIValueError('name', 'name cannot be empty.')
+    if not summary:
+        raise APIValueError('summary', 'summary cannot be empty.')
+    if not content:
+        raise APIValueError('content', 'content cannot be empty.')
+    blog = Blog.get(blog_id)
+    if blog is None:
+        raise APIResourceNotFoundError('Blog')
+    blog.name = name
+    blog.summary = summary
+    blog.content = content
+    blog.update()
+    return blog
 
 
 @api
