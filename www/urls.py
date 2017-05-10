@@ -23,9 +23,17 @@ def make_signed_cookie(uid, password, max_age):
 def parse_signed_cookie(cookie_str):
     try:
         L = cookie_str.split('-')
-        if len(L) !=3:
+        if len(L) != 3:
             return None
-
+        id, expires, md5 = L
+        if int(expires) < time.time():
+            return None
+        user = User.get(id)
+        if user is None:
+            return None
+        if md5 != hashlib.md5('%s-%s-%s-%s' % (id, user.password, expires, _COOKIE_KEY)).hexdigest():
+            return None
+        return user
     except:
         return None
 
