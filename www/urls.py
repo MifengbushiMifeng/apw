@@ -6,6 +6,7 @@ from models import User, Blog, Comment
 from config import configs
 import hashlib
 import logging
+import time
 from apis import api, Page, APIError, APIValueError, APIPermissionError, APIResourceNotFoundError
 
 _COOKIE_NAME = 'awesession'
@@ -36,10 +37,38 @@ def register_user():
     return user
 
 
+@api
+@post('/api/authenticate')
+def authenticate():
+    i = ctx.request.input(remember='')
+    email = i.email.strip().lower()
+    password = i.password
+    remember = i.remember
+    user = User.find_first('where email=?', email)
+    if user is None:
+        raise APIError('auth:failed', 'email', 'Invalid email')
+    elif user.password != password:
+        raise APIError('auth:failed', 'password', 'Invalid password')
+    # make session cookie:
+    max_age = 604800 if remember == 'true' else None
+    cookie = make_signed_cookie(user.id, user.password, max_age)
+    ctx.response.set_cookie(_COOKIE_NAME, cookie, max_age=max_age)
+    user.password = '******'
+    return user
+
+
+def make_signed_cookie(uid, password, max_age):
+    # build cookie string by: id-expires-md5
+    expires = str(int(time.time() + (max_age or 86400)))
+    cookie = [uid, expires, hashlib.md5('%s-%s-%s-%s' % (uid, password, expires, _COOKIE_KEY)).hexdigest()]
+    return '-'.join(cookie)
+
+
 @view('register.html')
 @get('/register')
 def register():
     return dict()
+
 
 
 @view('test_users.html')
