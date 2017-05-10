@@ -13,6 +13,23 @@ _COOKIE_NAME = 'awesession'
 _COOKIE_KEY = configs.session.secret
 
 
+def make_signed_cookie(uid, password, max_age):
+    # build cookie string by: id-expires-md5
+    expires = str(int(time.time() + (max_age or 86400)))
+    cookie = [uid, expires, hashlib.md5('%s-%s-%s-%s' % (uid, password, expires, _COOKIE_KEY)).hexdigest()]
+    return '-'.join(cookie)
+
+
+def parse_signed_cookie(cookie_str):
+    try:
+        L = cookie_str.split('-')
+        if len(L) !=3:
+            return None
+
+    except:
+        return None
+
+
 @api
 @post('/api/users')
 def register_user():
@@ -57,18 +74,24 @@ def authenticate():
     return user
 
 
-def make_signed_cookie(uid, password, max_age):
-    # build cookie string by: id-expires-md5
-    expires = str(int(time.time() + (max_age or 86400)))
-    cookie = [uid, expires, hashlib.md5('%s-%s-%s-%s' % (uid, password, expires, _COOKIE_KEY)).hexdigest()]
-    return '-'.join(cookie)
-
-
 @view('register.html')
 @get('/register')
 def register():
     return dict()
 
+
+@interceptor('/')
+def user_interceptor(next):
+    logging.info('Try to bind user from session cookie...')
+    user = None
+    cookie = ctx.request.cookies.get(_COOKIE_NAME)
+    if cookie:
+        logging.info('parse session cookie')
+        user = parse_signed_cookie(cookie)
+        if user:
+            logging.info('bind user <%s> to session...' % user.email)
+    ctx.request.user = user
+    return next()
 
 
 @view('test_users.html')

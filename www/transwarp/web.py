@@ -1346,13 +1346,13 @@ def _build_pattern_fn(pattern):
 
 
 def interceptor(pattern='/'):
-    '''
+    """
     An @interceptor decorator.
 
     @interceptor('/admin/')
     def check_admin(req, resp):
         pass
-    '''
+    """
 
     def _decorator(func):
         func.__interceptor__ = _build_pattern_fn(pattern)
