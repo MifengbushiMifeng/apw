@@ -615,7 +615,8 @@ class StaticFileRoute(object):
 
 
 def favicon_handler():
-    return static_file_handler('/favicon.ico')
+    # return static_file_handler('/favicon.ico')
+    pass
 
 
 class MultipartFile(object):
@@ -1292,7 +1293,8 @@ def _default_error_handler(e, start_response, is_debug):
     logging.exception('Exception:')
     start_response('500 Internal Server Error', [('Content-Type', 'text/html'), _HEADER_X_POWERED_BY])
     if is_debug:
-        return _debug()
+        # return _debug()
+        pass
     return ('<html><body><h1>500 Internal Server Error</h1><h3>%s</h3></body></html>' % str(e))
 
 
