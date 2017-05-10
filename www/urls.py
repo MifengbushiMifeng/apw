@@ -6,7 +6,6 @@ from models import User, Blog, Comment
 from config import configs
 import hashlib
 import logging
-
 from apis import api, Page, APIError, APIValueError, APIPermissionError, APIResourceNotFoundError
 
 _COOKIE_NAME = 'awesession'
@@ -35,6 +34,12 @@ def register_user():
     # make session and cookies
     # cookie = make_signed_cookies()
     return user
+
+
+@view('register.html')
+@get('/register')
+def register():
+    return dict()
 
 
 @view('test_users.html')
