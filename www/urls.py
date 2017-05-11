@@ -272,6 +272,17 @@ def api_update_blog(blog_id):
     return blog
 
 
+@api
+@post('/api/blogs/:blog_id/delete')
+def api_delete_blog(blog_id):
+    check_admin()
+    blog = Blog.get(blog_id)
+    if blog is None:
+        raise APIResourceNotFoundError('Blog')
+    blog.delete()
+    return dict(id=blog_id)
+
+
 @view('test_users.html')
 @get('/')
 def test_user():
