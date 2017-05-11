@@ -55,13 +55,52 @@ def check_admin():
     raise APIPermissionError('No permission')
 
 
+@interceptor('/')
+def user_interceptor(next):
+    logging.info('Try to bind user from session cookie...')
+    user = None
+    cookie = ctx.request.cookies.get(_COOKIE_NAME)
+    if cookie:
+        logging.info('parse session cookie')
+        user = parse_signed_cookie(cookie)
+        if user:
+            logging.info('bind user <%s> to session...' % user.email)
+    ctx.request.user = user
+    return next()
+
+
+@interceptor('/manage/')
+def manage_interceptor(next):
+    user = ctx.request.user
+    if user and user.admin:
+        return next()
+    raise seeother('/signin')
+
+
+@view('blogs.html')
+@get('/')
+def index():
+    blogs, page = _get_blogs_by_page()
+    return dict(page=page, blogs=blogs, user=ctx.request.user)
+
+
+@view('blog.html')
+@get('/blog/:blog_id')
+def blog(blog_id):
+    blog = Blog.get(blog_id)
+    if blog is None:
+        raise notfound()
+    blog.html_content = markdown2.markdown(blog.content)
+    comments = Comment.find_by('where blog_id=? order by created_at desc limit 1000', blog_id)
+    return dict(blog=blog, comments=comments, user=ctx.request.user)
+
+
 @view('signin.html')
 @get('/signin')
 def signin():
     return dict()
 
 
-@view('signout')
 @get('/signout')
 def signout():
     ctx.response.delete_cookie(_COOKIE_NAME)
@@ -88,6 +127,35 @@ def authenticate():
     return user
 
 
+_RE_EMAIL = re.compile(r'^[a-z0-9\.\-\_]+\@[a-z0-9\-\_]+(\.[a-z0-9\-\_]+){1,4}$')
+_RE_MD5 = re.compile(r'^[0-9a-f]{32}$')
+
+
+@api
+@post('/api/users')
+def register_user():
+    i = ctx.request.input(name='', email='', password='')
+    name = i.name.strip()
+    email = i.email.strip().lower()
+    password = i.password
+    if not name:
+        raise APIValueError('name')
+    if not email or not _RE_EMAIL.match(email):
+        raise APIValueError('email')
+    if not password or not _RE_MD5.match(password):
+        raise APIValueError('password')
+    user = User.find_first('where email=?', email)
+    if user:
+        raise APIError('register:failed', 'email', 'Email is already in use.')
+    user = User(name=name, email=email, password=password,
+                image='http://www.gravatar.com/avatar/%s?d=mm&s=120' % hashlib.md5(email).hexdigest())
+    user.insert()
+    # make session and cookies
+    cookie = make_signed_cookie(user.id, user.password, None)
+    ctx.response.set_cookie(_COOKIE_NAME, cookie)
+    return user
+
+
 @view('register.html')
 @get('/register')
 def register():
@@ -101,45 +169,37 @@ def _get_blogs_by_page():
     return blogs, page
 
 
-@interceptor('/')
-def user_interceptor(next):
-    logging.info('Try to bind user from session cookie...')
-    user = None
-    cookie = ctx.request.cookies.get(_COOKIE_NAME)
-    if cookie:
-        logging.info('parse session cookie')
-        user = parse_signed_cookie(cookie)
-        if user:
-            logging.info('bind user <%s> to session...' % user.email)
-    ctx.request.user = user
-    return next()
+@get('/manage/')
+def manage_index():
+    raise seeother('/manage/comments')
 
 
-@view('test_users.html')
-@get('/')
-def test_user():
-    users = User.find_all()
-    return dict(users=users)
-
-
-@view('blogs.html')
-@get('/test')  # TODO
-def index():
-    blogs = Blog.find_all()
-    # get login user
-    user = User.find_first('where email=?', 'admin@example.com')
-    return dict(blogs=blogs, user=user)
-
-
-_RE_EMAIL = re.compile(r'^[a-z0-9\.\-\_]+\@[a-z0-9\-\_]+(\.[a-z0-9\-\_]+){1,4}$')
-
-_RE_MD5 = re.compile(r'^[0-9a-f]{32}$')
+@view('manage_comment_list.html')
+@get('/manage/comments')
+def manage_comments():
+    return dict(page_index=_get_page_index(), user=ctx.request.user)
 
 
 @view('manage_blog_list.html')
 @get('/manage/blogs')
 def manage_blogs():
     return dict(page_index=_get_page_index(), user=ctx.request.user)
+
+
+@view('manage_blog_edit.html')
+@get('/manage/blogs/create')
+def manage_blogs_create():
+    return dict(id=None, action='/api/blogs', redirect='/manage/blogs', user=ctx.request.user)
+
+
+@view('manage_blog_edit.html')
+@get('/manage/blogs/edit/:blog_id')
+def manage_blogs_edit(blog_id):
+    blog = Blog.get(blog_id)
+    if blog is None:
+        raise notfound()
+    return dict(id=blog.id, name=blog.name, summary=blog.summary, content=blog.content,
+                action='/api/blogs/%s' % blog_id, redirect='/manage/blogs', user=ctx.request.user)
 
 
 @api
@@ -181,6 +241,13 @@ def _api_create_blog():
     return blog
 
 
+@view('test_users.html')
+@get('/')
+def test_user():
+    users = User.find_all()
+    return dict(users=users)
+
+
 @api
 @post('/api/blogs/:blog_id')
 def api_update_blog(blog_id):
@@ -203,27 +270,3 @@ def api_update_blog(blog_id):
     blog.content = content
     blog.update()
     return blog
-
-
-@api
-@post('/api/users')
-def register_user():
-    i = ctx.request.input(name='', email='', password='')
-    name = i.name.strip()
-    email = i.email.strip().lower()
-    password = i.password
-    if not name:
-        raise APIValueError('name')
-    if not email or not _RE_EMAIL.match(email):
-        raise APIValueError('email')
-    if not password or not _RE_MD5.match(password):
-        raise APIValueError('password')
-    user = User.find_first('where email=?', email)
-    if user:
-        raise APIError('register:failed', 'email', 'Email is already in use.')
-    user = User(name=name, email=email, password=password,
-                image='http://www.gravatar.com/avatar/%s?d=mm&s=120' % hashlib.md5(email).hexdigest())
-    user.insert()
-    # make session and cookies
-    # cookie = make_signed_cookies()
-    return user
