@@ -8,9 +8,19 @@ import hashlib
 import logging
 import time
 from apis import api, Page, APIError, APIValueError, APIPermissionError, APIResourceNotFoundError
+import markdown2
 
 _COOKIE_NAME = 'awesession'
 _COOKIE_KEY = configs.session.secret
+
+
+def _get_page_index():
+    page_index = 1
+    try:
+        page_index = int(ctx.request.get('page', '1'))
+    except ValueError:
+        pass
+    return page_index
 
 
 def make_signed_cookie(uid, password, max_age):
@@ -84,6 +94,13 @@ def register():
     return dict()
 
 
+def _get_blogs_by_page():
+    total = Blog.count_all()
+    page = Page(total, _get_page_index())
+    blogs = Blog.find_all('order by created_at desc limit ?,?', page.offset, page.limit)
+    return blogs, page
+
+
 @interceptor('/')
 def user_interceptor(next):
     logging.info('Try to bind user from session cookie...')
@@ -117,6 +134,31 @@ def index():
 _RE_EMAIL = re.compile(r'^[a-z0-9\.\-\_]+\@[a-z0-9\-\_]+(\.[a-z0-9\-\_]+){1,4}$')
 
 _RE_MD5 = re.compile(r'^[0-9a-f]{32}$')
+
+
+@view('manage_blog_list.html')
+@get('/manage/blogs')
+def manage_blogs():
+    return dict(page_index=_get_page_index(), user=ctx.request.user)
+
+
+@api
+@get('/api/blogs')
+def api_get_blogs():
+    format = ctx.request.get('format', '')
+    blogs, page = _get_blogs_by_page()
+    if format == 'html':
+        for blog in blogs:
+            blog.content = markdown2.markdown(blog.content)
+    return dict(blogs=blogs, page=page)
+
+
+@api
+@get('/api/blogs/:blog_id')
+def api_get_blog(blog_id):
+    blog = Blog.get(blog_id)
+    if blog:
+        return blog
 
 
 @api

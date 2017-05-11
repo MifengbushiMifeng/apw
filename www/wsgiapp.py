@@ -22,7 +22,7 @@ from config import configs
 from datetime import datetime
 
 
-def datatime_filter(t):
+def datetime_filter(t):
     delta = int(time.time() - t)
     if delta < 60:
         return u'1 minute ago.'
@@ -43,7 +43,7 @@ db.create_engine(**configs.db)
 wsgi = WSGIApplication(os.path.dirname(os.path.abspath(__file__)))
 
 template_engine = Jinja2TemplateEngine(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates'))
-template_engine.add_filter('datetime', datatime_filter)
+template_engine.add_filter('datetime', datetime_filter)
 
 wsgi.template_engine = template_engine
 
