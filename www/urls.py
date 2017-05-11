@@ -202,6 +202,12 @@ def manage_blogs_edit(blog_id):
                 action='/api/blogs/%s' % blog_id, redirect='/manage/blogs', user=ctx.request.user)
 
 
+@view('manage_user_list.html')
+@get('/manage/users')
+def manage_users():
+    return dict(page_index=_get_page_index(), user=ctx.request.user)
+
+
 @api
 @get('/api/blogs')
 def api_get_blogs():
