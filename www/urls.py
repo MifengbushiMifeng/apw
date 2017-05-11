@@ -225,11 +225,12 @@ def api_get_blog(blog_id):
     blog = Blog.get(blog_id)
     if blog:
         return blog
+    raise APIResourceNotFoundError('Blog')
 
 
 @api
 @post('/api/blogs')
-def _api_create_blog():
+def api_create_blog():
     check_admin()
     i = ctx.request.input(name='', summary='', content='')
     name = i.name.strip()
@@ -245,13 +246,6 @@ def _api_create_blog():
     blog = Blog(user_id=user.id, user_name=user.name, name=name, summary=summary, content=content)
     blog.insert()
     return blog
-
-
-@view('test_users.html')
-@get('/')
-def test_user():
-    users = User.find_all()
-    return dict(users=users)
 
 
 @api
@@ -276,3 +270,10 @@ def api_update_blog(blog_id):
     blog.content = content
     blog.update()
     return blog
+
+
+@view('test_users.html')
+@get('/')
+def test_user():
+    users = User.find_all()
+    return dict(users=users)
