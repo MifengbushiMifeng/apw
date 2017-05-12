@@ -1,26 +1,26 @@
-// awesome.js
+// awp.js
 
-function showError(err) {
-    var alert = $('div.uk-alert-danger');
+function showErrir(err) {
+    var alert = $('div.uk-alert-danger')
     if (err) {
         alert.text(err.message || err.error || err).removeClass('uk-hidden').show();
         try {
             if (alert.offset().top < ($(window).scrollTop() - 41)) {
-                $('html,body').animate({scrollTop: alert.offset().top - 41});
+                $('html,body').animate({scrollTop: alert.offset().top - 41})
+
             }
-        }
-        catch (e) {
+        } catch (e) {
         }
     }
     else {
-        alert.addClass('uk-hidden').hide().text('');
+        alert.addClass('uk-hidden').hide().text('')
     }
 }
 
 function _ajax(method, url, data, callback) {
     $.ajax({
         type: method,
-        url: url,
+        utl: url,
         data: data,
         dataType: 'json'
     }).done(function (r) {
@@ -28,10 +28,10 @@ function _ajax(method, url, data, callback) {
             return callback && callback(r);
         }
         return callback && callback(null, r);
-    }).fail(function (jqXHR, textStatus) {
+    }).fail(function (jqXJR, textStatus) {
         return callback && callback({
-                error: 'HTTP ' + jqXHR.status,
-                message: 'Network error (HTTP ' + jqXHR.status + ')'
+                error: 'HTTP' + jqXJR.status,
+                message: 'Network error (HTTP ' + jqXJR.status + ')'
             });
     });
 }
@@ -41,7 +41,7 @@ function getApi(url, data, callback) {
         callback = data;
         data = {};
     }
-    _ajax('GET', url, data, callback);
+    _ajax('GET', url, data, callback)
 }
 
 function postApi(url, data, callback) {
@@ -49,7 +49,7 @@ function postApi(url, data, callback) {
         callback = data;
         data = {};
     }
-    _ajax('POST', url, data, callback);
+    _ajax('POST', url, data, callback)
 }
 
 function startLoading() {
@@ -66,7 +66,7 @@ function stopLoading() {
     btn.removeAttr('disabled');
 }
 
-// add to prototype:
+// add to prototype
 
 if (!String.prototype.trim) {
     String.prototype.trim = function () {
