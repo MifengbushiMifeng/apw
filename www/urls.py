@@ -1,5 +1,7 @@
 # !/usr/bin/env python
 # encoding=utf-8
+
+
 import re
 from transwarp.web import get, view, interceptor, post, ctx, view, internalerror, seeother, notfound
 from models import User, Blog, Comment
@@ -281,6 +283,54 @@ def api_delete_blog(blog_id):
         raise APIResourceNotFoundError('Blog')
     blog.delete()
     return dict(id=blog_id)
+
+
+@api
+@post('/api/blogs/:blog_id/comments')
+def api_create_blog_comment(blog_id):
+    user = ctx.request.user
+    if user is None:
+        raise APIPermissionError('Need sign in.')
+    blog = Blog.get(blog_id)
+    if blog is None:
+        raise APIResourceNotFoundError('Blog')
+    content = ctx.request.input(content='').content.strip()
+    if not content:
+        raise APIValueError('content')
+    c = Comment(blog_id=blog_id, user_id=user.id, user_name=user.name, user_image=user.image, content=content)
+    c.insert()
+    return dict(comment=c)
+
+
+@api
+@post('/api/comments/:comment_id/delete')
+def api_delete_comment(comment_id):
+    check_admin()
+    comment = Comment.get(comment_id)
+    if comment is None:
+        raise APIResourceNotFoundError('Comment')
+    comment.delete()
+    return dict(id=comment_id)
+
+
+@api
+@get('/api/comments')
+def api_get_comments():
+    total = Comment.count_all()
+    page = Page(total, _get_page_index())
+    comments = Comment.find_by('order by created_at desc limit ?,?', page.offset, page.limit)
+    return dict(comments=comments, page=page)
+
+
+@api
+@get('/api/users')
+def api_get_user():
+    total = User.count_all()
+    page = Page(total, _get_page_index())
+    users = User.find_by('order by created_at desc limit ?,?', page.offset, page.limit)
+    for u in users:
+        u.password = '******'
+    return dict(users=users, page=page)
 
 
 @view('test_users.html')
